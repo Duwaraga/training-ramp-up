@@ -1,12 +1,26 @@
 /* eslint-disable prettier/prettier */
+// /* eslint-disable prettier/prettier */
 import { Test, TestingModule } from '@nestjs/testing';
 import { StudentController } from './student.controller';
 import { StudentService } from './student.service';
+import { StudentDto } from './../dto/student.dto';
+import { Student } from '../entity/student.entity';
 
 describe('StudentController', () => {
   let controller: StudentController;
   let studentService: StudentService;
 
+  const BobData = [
+    {
+      ID: 1,
+      studentName: 'bob',
+      gender: 'Male',
+      address: 'bobAddress',
+      mobileNo: '0769879876',
+      dob: new Date('1997-12-05 00:00:00'),
+      age: 25,
+    },
+  ];
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StudentController],
@@ -15,20 +29,35 @@ describe('StudentController', () => {
         {
           provide: StudentService,
           useValue: {
-            getAll: jest.fn(() => [
-              {
-                id: 1,
-                name: 'bob',
-                gender: 'Male',
-                address: 'bobAddress',
-                mobileNo: '0769879876',
-                birth: new Date('1997-12-05 00:00:00'),
-                age: '25',
-              } as any,
-            ]),
-            addOne: jest.fn((x) => x),
-            deleteOne: jest.fn((x) => x),
-            updateOne: jest.fn((x) => x),
+            getAll: jest.fn(() => {
+              return BobData;
+            }),
+            addOne: jest.fn((x) => {
+              if (!x) {
+                return null;
+              } else {
+                BobData.push(x);
+                return x;
+              }
+            }),
+            deleteOne: jest.fn((x) => {
+              if (!x) {
+                return null;
+              } else {
+                const index = BobData.map((object) => object.ID).indexOf(x);
+                BobData.splice(1, index);
+                return BobData;
+              }
+            }),
+            updateOne: jest.fn((x) => {
+              if (x == null) {
+                return null;
+              } else {
+                const index = BobData.map((object) => object.ID).indexOf(x.ID);
+                BobData.splice(index, 1, x);
+                return BobData;
+              }
+            }),
           },
         },
       ],
@@ -45,163 +74,153 @@ describe('StudentController', () => {
     expect(studentService).toBeDefined();
   });
   describe('Get student works successfully', () => {
-    it('student should be created', async () => {
+    it('Get student ', async () => {
       const student = [
         {
-          id: 1,
-          name: 'bob',
+          ID: 1,
+          studentName: 'bob',
           gender: 'Male',
           address: 'bobAddress',
           mobileNo: '0769879876',
-          birth: new Date('1997-12-05 00:00:00'),
-          age: '25',
-        } as any,
+          dob: new Date('1997-12-05 00:00:00'),
+          age: 25,
+        },
       ];
 
-      await studentService.getAll();
       const res = await controller.getStudent();
       expect(res).toStrictEqual(student);
     });
     it('Get student fails', async () => {
       jest.spyOn(studentService, 'getAll').mockResolvedValue(null);
       const res = await controller.getStudent();
-      expect(res).toStrictEqual(null);
+      expect(res).toStrictEqual({ msg: 'Error occured to get the student' });
     });
   });
 
   describe('Student created successfully', () => {
     it('Student should be created', async () => {
       const studentBob = {
-        id: 1,
-        name: 'bob',
+        ID: 1,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as any;
-      const studentBobby = {
-        id: 1,
-        name: 'bob',
-        gender: 'Male',
-        address: 'bobAddress',
-        mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as any;
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
 
-      await studentService.addOne(studentBob);
-      const res = await controller.addStudent(studentBobby);
+      const req: StudentDto = {
+        ID: 1,
+        studentName: 'bob',
+        gender: 'Male',
+        address: 'bobAddress',
+        mobileNo: '0769879876',
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
+
+      const res = await controller.addStudent(req);
       expect(res).toStrictEqual(studentBob);
     });
     it('Student create fails', async () => {
-      await studentService.addOne(null);
       const res = await controller.addStudent(null);
-      expect(res).toStrictEqual(null);
+      expect(res).toStrictEqual({ msg: 'Error occured to post a student' });
     });
   });
   describe('Student was deleted successfully', () => {
-    it('Student should be deleted', async () => {
-      const student = {
-        id: 1,
-        name: 'bob',
+    const bob = [
+      {
+        ID: 1,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as any;
-      const req = {
-        params: {
-          id: 1,
-        },
-      };
-      const studentId = 1;
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      },
+      {
+        ID: 1,
+        studentName: 'bob',
+        gender: 'Male',
+        address: 'bobAddress',
+        mobileNo: '0769879876',
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      },
+    ];
+    const req = {
+      params: {
+        ID: 1,
+      },
+    };
+    it('Student should be deleted', async () => {
       const res = await controller.deleteStudent(req);
-      await studentService.deleteOne(student);
-      expect(res).toStrictEqual(studentId);
+      expect(res).toStrictEqual(bob);
     });
     it('student delete fails', async () => {
       const req = {
         params: {
-          id: null,
+          ID: null,
         },
       };
 
-      await studentService.deleteOne(null);
       const res = await controller.deleteStudent(req);
-      expect(res).toStrictEqual(NaN);
+      expect(res).toStrictEqual({ msg: 'Error occured to delete a student' });
     });
   });
   describe('Update Student ', () => {
     it('Student should be updated', async () => {
-      const student = {
-        id: 1,
-        name: 'bob',
-        gender: 'Male',
-        address: 'bobAddress',
-        mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as any;
-      const req = {
+      const request = {
         body: {
-          id: 1,
-          name: 'bob',
+          ID: 1,
+          studentName: 'bob',
           gender: 'Male',
           address: 'bobAddress',
           mobileNo: '0769879876',
-          birth: new Date('1997-12-05 00:00:00'),
-          age: '25',
-        },
-        params: {
-          id: 1,
+          dob: new Date('1997-12-05 00:00:00'),
+          age: 25,
         },
       };
-      const res = {
+      const response = {
+        json: jest.fn((x) => x),
         send: jest.fn(() => [
           {
-            id: 1,
-            name: 'bob',
+            ID: 1,
+            studentName: 'Mark',
             gender: 'Male',
             address: 'bobAddress',
             mobileNo: '0769879876',
-            birth: new Date('1997-12-05 00:00:00'),
-            age: '25',
-       
-      }
-    ])}
-      const user = {
-        body: {
-          id: 1,
-          name: 'bob',
-          gender: 'Male',
-          address: 'bobAddress',
-          mobileNo: '0769879876',
-          birth: new Date('1997-12-05 00:00:00'),
-          age: '25',
-        },
-        id: 1,
-      } as any;
+            dob: new Date('1997-12-05 00:00:00'),
+            age: 25,
+          },
+        ]),
+      };
+      const updatedStudent = {
+        ID: 1,
+        studentName: 'Mark',
+        gender: 'Male',
+        address: 'bobAddress',
+        mobileNo: '0769879876',
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      } as Student;
 
-      await studentService.updateOne(student);
-      const response = await controller.updateStudent(req);
-      expect(response).toStrictEqual(user);
+      jest.spyOn(studentService, 'updateOne').mockResolvedValue(updatedStudent);
+      const res = await controller.updateStudent(request, response);
+      console.log('RESDATA', res);
+      expect(res).toStrictEqual(updatedStudent);
     });
     it('Student update fails', async () => {
-      const req = {
+      const request = {
         body: null,
-        params: {
-          id: 1,
-        },
       };
-      const res = {
-        send: jest.fn(() => null),
+      const response = {
+        json: jest.fn((x) => x),
       };
 
-      await studentService.updateOne(null);
-      const response = await controller.updateStudent(req);
-      expect(response).toStrictEqual({ body: null, id: 1 });
+      jest.spyOn(studentService, 'updateOne').mockResolvedValue(null);
+      const res = await controller.updateStudent(request, response);
+      expect(res).toStrictEqual('Error occured to update student');
     });
   });
 });

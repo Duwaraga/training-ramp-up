@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Student } from '../entity/student.entity';
-// import { StudentDto } from '../dto/student.dto';
+import { StudentDto } from '../dto/student.dto';
 @Injectable()
 export class StudentService {
   constructor(
@@ -18,12 +18,12 @@ export class StudentService {
     } catch (error) {
       console.log(error);
       return {
-        error: "Couldn't retrieve the students",
+        error: 'Error occured to get the student',
       };
     }
   }
 
-  async addOne(student: any) {
+  async addOne(student: StudentDto) {
     try {
       const studentData = await this.studentRepository.save(student);
       return studentData;
@@ -36,17 +36,20 @@ export class StudentService {
   async updateOne(data) {
     try {
       const student = await this.studentRepository.findOne({
-        where: { ID: data.id },
+        where: { ID: parseInt(data.ID) },
       });
-
-      const newStudent = this.studentRepository.merge(student, data.body);
-      console.log('NewStudent', newStudent);
-      const result = await this.studentRepository.save(student);
-      if (!result) {
-        return {error: 'student update fail'};
+      console.log('STUDENT DATA', student);
+      if (!student) {
+        return { msg: 'student not found' };
+      } else {
+        const newStudent = this.studentRepository.merge(student, data);
+        console.log('NewStudent', newStudent);
+        const result = await this.studentRepository.save(newStudent);
+        if (!result) {
+          return { error: 'student update fail' };
+        }
+        return result;
       }
-
-      return result;
     } catch (error) {
       console.log(error);
       return { error: 'student update fail' };

@@ -19,7 +19,7 @@ export class Student extends BaseEntity {
   mobileNo: string;
 
   @Column({ type: 'date', nullable: true })
-  dob: string;
+  dob: Date;
 
   @Column()
   age: number;

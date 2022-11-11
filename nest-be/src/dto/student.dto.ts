@@ -3,6 +3,10 @@ import { IsNotEmpty, IsString, IsInt } from 'class-validator';
 
 export class StudentDto {
 
+  @IsInt()
+  @IsNotEmpty()
+  ID: number;
+
   @IsString()
   @IsNotEmpty()
   studentName: string;
@@ -15,13 +19,13 @@ export class StudentDto {
   @IsNotEmpty()
   address: string;
 
-  @IsInt()
+  @IsString()
   @IsNotEmpty()
   mobileNo: string;
 
   @IsInt()
   @IsNotEmpty()
-  age: string;
+  age: number;
 
   @IsNotEmpty()
   dob: Date;

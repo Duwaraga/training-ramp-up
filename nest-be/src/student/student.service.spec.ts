@@ -4,10 +4,32 @@ import { StudentService } from './student.service';
 import { Student } from '../entity/student.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { StudentDto } from 'src/dto/student.dto';
 
 describe('StudentService', () => {
   let service: StudentService;
   let studentRepository: Repository<Student>;
+
+  const student = [
+    {
+      ID: 1,
+      studentName: 'bob',
+      gender: 'Male',
+      address: 'bobAddress',
+      mobileNo: '0769879876',
+      dob: new Date('1997-12-05 00:00:00'),
+      age: 25,
+    },
+    {
+      ID: 2,
+      studentName: 'bob',
+      gender: 'Male',
+      address: 'bobAddress',
+      mobileNo: '0769879876',
+      dob: new Date('1997-12-05 00:00:00'),
+      age: 25,
+    },
+  ];
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -19,20 +41,50 @@ describe('StudentService', () => {
           useValue: {
             find: jest.fn(() => [
               {
-                id: 1,
-                name: 'bob',
+                ID: 1,
+                studentName: 'bob',
                 gender: 'Male',
                 address: 'bobAddress',
                 mobileNo: '0769879876',
-                birth: new Date('1997-12-05 00:00:00'),
-                age: '25',
+                dob: new Date('1997-12-05 00:00:00'),
+                age: 25,
               },
             ]),
-            save: jest.fn((x) => x),
-            findOne: jest.fn((x) => x),
-            merge: jest.fn((x, y) => x),
-            remove: jest.fn((x) => x),
-            findOneBy: jest.fn((x) => x),
+            save: jest.fn((x) => {
+              if (!x) {
+                return null;
+              } else {
+                student.push(x);
+                return x;
+              }
+            }),
+            findOne: jest.fn((x) => {
+              const index = student
+                .map((object) => object.ID)
+                .indexOf(x.where.ID);
+              if (index == -1) {
+                return null;
+              } else {
+                return student[index];
+              }
+            }),
+            merge: jest.fn((x, y) => {
+              x = y;
+              return x;
+            }),
+            remove: jest.fn((x) => {
+              const index = student.map((object) => object.ID).indexOf(x.ID);
+              student.splice(1, index);
+              return student;
+            }),
+            findOneBy: jest.fn((x) => {
+              const index = student.map((object) => object.ID).indexOf(x.ID);
+              if (index == -1) {
+                return null;
+              } else {
+                return student[index];
+              }
+            }),
           },
         },
       ],
@@ -54,140 +106,104 @@ describe('StudentService', () => {
     it('it should get all student', async () => {
       const student = [
         {
-          id: 1,
-          name: 'bob',
+          ID: 1,
+          studentName: 'bob',
           gender: 'Male',
           address: 'bobAddress',
           mobileNo: '0769879876',
-          birth: new Date('1997-12-05 00:00:00'),
-          age: '25',
-        } as never,
+          dob: new Date('1997-12-05 00:00:00'),
+          age: 25,
+        },
       ];
-      const res = await studentRepository.find();
+      const res = await service.getAll();
       expect(res).toEqual(student);
     });
   });
   describe('Create Student', () => {
     it('it should create success', async () => {
-      const student_02 = {
-        id: 1,
-        name: 'bob',
+      const studentBob = {
+        ID: 1,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as never;
-      const student_01 = {
-        id: 1,
-        name: 'bob',
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
+      const req: StudentDto = {
+        ID: 1,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as never;
-      jest.spyOn(studentRepository, 'save').mockResolvedValueOnce(student_01);
-      const res = await studentRepository.save(student_01);
-      expect(res).toEqual(student_02);
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
+      const res = await service.addOne(req);
+      expect(res).toEqual(studentBob);
     });
     it('student create fails', async () => {
-      const req = {
-        name: 'test',
-      } as any;
-      jest.spyOn(studentRepository, 'save').mockResolvedValueOnce(undefined);
+      const req = null;
       const res = await service.addOne(req);
-      expect(studentRepository.save).toHaveBeenCalled();
-      expect(res).toEqual(undefined);
+      expect(res).toEqual(null);
     });
-
-    // it('it should create fails', async () => {
-    //   const res = await studentRepository.save(null);
-    //   expect(res).toEqual(null);
-    // });
   });
   describe('Delete Student', () => {
     it('it should delete success', async () => {
       const req = 2;
       const student1 = {
-        id: 1,
-        name: 'bob',
+        ID: 2,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as any;
-      jest
-      .spyOn(studentRepository, 'findOneBy')
-      .mockResolvedValueOnce(student1);
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
 
-    const res = await service.deleteOne(req);
-    expect(studentRepository.remove).toHaveBeenCalled();
-    expect(studentRepository.findOneBy).toHaveBeenCalled();
-    expect(res).toEqual(student1);
+      const res = await service.deleteOne(req);
+      expect(res).toEqual(student1);
     });
     it('student delete fail', async () => {
       const req = 10;
-      jest.spyOn(studentRepository, 'findOneBy').mockResolvedValueOnce(null);
       const res = await service.deleteOne(req);
       expect(res).toEqual(null);
     });
   });
   describe('Update Student', () => {
     it('it should Update success', async () => {
-      const req = {
-        params: {
-          studnetId: 1,
-        },
-      } as any;
       const student1 = {
-        id: 1,
-        name: 'bob',
+        ID: 1,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as never;
-      const student2 = {
-        id: 1,
-        name: 'bob',
-        gender: 'Male',
-        address: 'bobAddress',
-        mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as any;
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
 
-      const res = await studentRepository.findOne(student1);
-      expect(res).toEqual(student1);
-    });
-    it('student merge', async () => {
-      const student_02 = {
-        id: 1,
-        name: 'bob',
+      const student2 = {
+        ID: 1,
+        studentName: 'bob',
         gender: 'Male',
         address: 'bobAddress',
         mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as never;
-      const student_01 = {
-        id: 1,
-        name: 'bob',
-        gender: 'Male',
-        address: 'bobAddress',
-        mobileNo: '0769879876',
-        birth: new Date('1997-12-05 00:00:00'),
-        age: '25',
-      } as never;
-      const res = studentRepository.merge(student_01, student_02);
-      expect(res).toEqual(student_01);
+        dob: new Date('1997-12-05 00:00:00'),
+        age: 25,
+      };
+
+      const res = await service.updateOne(student1);
+      expect(res).toEqual(student2);
     });
-    it('it must error merge', async () => {
-      const res = studentRepository.merge(null);
-      expect(res).toEqual(null);
+
+    it('student update fail', async () => {
+      const req = {
+        ID: 10,
+        mobileNo: '0714567890',
+      };
+
+      const res = await service.updateOne(req);
+      expect(res).toEqual({ msg: 'student not found' });
     });
   });
 });

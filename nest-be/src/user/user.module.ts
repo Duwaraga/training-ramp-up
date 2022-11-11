@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { Users } from 'src/entity/user.entity';
 import { UserController } from './user.controller';
